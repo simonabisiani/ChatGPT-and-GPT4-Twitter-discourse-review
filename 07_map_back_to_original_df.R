@@ -81,47 +81,17 @@ joined_df <-
 
 saveRDS(joined_df, "joined_df.RDS")
 
-# # Graph about topic proportion in dataset based on top topic per doc and retweets
-# p <- joined_df |>
-#   unnest(topic) |>
-#   mutate(tot_docs = 483249) |>
-#   left_join(topic_names, by = c("topic" = "id")) |>
-#   group_by(name) |>
-#   mutate(n = n(),
-#          prop1 = n / tot_docs * 100) |>
-#   select(name, prop1) |>
-#   distinct() |>
-#   bind_rows(count_top_doc, .id = "id") |> arrange(prop1) #|>
-#   ggplot(aes(x = factor(name, levels = c(
-#     "Human-tool skill comparison",
-#     "Teams / Projects",
-#     "Model specifications",
-#     "Usage of the tool",
-#     "Disruptiveness",
-#     "Benefits of using the tool",
-#     "Coding aid",
-#     "Content creation",
-#     "Hidden aspects of the tool",
-#     "Economic impact",
-#     "Business news",
-#     "Future potential",
-#     "Education",
-#     "Job implications"
-#   )), y = prop1)) +
-#     geom_point(size = 2, alpha = 0.7, aes(color = id)) +
-#   scale_color_brewer(palette = "Set1", name = "Dataset", labels = c("Retweet adjusted", "Model input"))+
-#     coord_flip() +
-#     xlab("") + ylab("Tweets (%)") +
-#     theme_minimal()
-#
-#
-# # Save the plot as a PNG file
-# png(
-#   "retweets_space_topics.png",
-#   width = 5.5,
-#   height = 2,
-#   units = "in",
-#   res = 300
-# )
-# print(p)
-# dev.off()
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# TOP RETWEETS
+top_retweets <- joined_df |> group_by(text_clean) |> sample_n(size = 1) |> ungroup() |> arrange(desc(n_copies)) |> slice_head(n = 100)
+
+top_retweets |> 
+  ungroup() |> ggplot(aes(x = n_copies)) +
+  stat_function(fun = dnorm, n = 101, args = list(mean = 0, sd = 1)) + ylab("") +
+  scale_y_continuous(breaks = NULL)+
+  scale_x_log10()+
+  theme_minimal()
+
+library(googlesheets4)
+write_sheet(top_retweets, ss = "https://docs.google.com/spreadsheets/d/1650HIlq1o1z4zMl9GvlGxmPineL3y44xOOeX_Z-I3wE/edit#gid=251884392", sheet = "top_retweets")

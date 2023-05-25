@@ -6,8 +6,7 @@ library(qdapRegex)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Data
-
-full_dataset <- readRDS("~/chatgpt_employment_copy/files/full_dataset.RDS")
+full_dataset <- readRDS("~/chatgpt_paper/ChatGPT-and-GPT4-Twitter-discourse-review/files/full_dataset.RDS")
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Cleaning steps
@@ -91,6 +90,7 @@ unique_data <- cleaned_data |>
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Timeline
 
+unique_data <- readRDS("~/chatgpt_paper/ChatGPT-and-GPT4-Twitter-discourse-review/files/april_reclean_no_hashtags_or_mentions.RDS")
 # How does the discourse look like over time? We observe an inital peak in early December, followed by a dip around the holidays. The discourse then goes on to increasing and reaching new levels of intensity in the new year. This is the case both in the unique-tweets dataset and in the full dataset. Another thing we note is that retweets constantly outnumber original tweets.
 
 filtered_data <- unique_data |> 
@@ -135,15 +135,19 @@ filtered_data |>
 
 # Which queries returned more tweets? Some queries are more popular than other (and they might also contain more noise). The trends are similar for both the filtered and the full datasets, with the most popular query using the word "work", followed by "education" and "job" or "jobs".
 
-query_index_filtered <- full_dataset |> 
+query_index_fulldf <- full_dataset |> 
 ungroup() |>
 count(query) 
 
-query_index_fulldf <- unique_data |> 
+query_index_filtered <- unique_data |> 
 ungroup() |>
 count(query) 
 
-queries <- bind_rows(query_index_filtered, query_index_fulldf, .id = "id")
+queries <- bind_rows(query_index_filtered, query_index_fulldf, .id = "id") |> 
+  arrange(desc(n)) |> 
+  pivot_wider(id_cols = query, names_from = id, values_from = n) 
+
+write_csv(queries,"queries.csv")
 
 queries |> 
 ggplot(aes(x = reorder(query,n), y = n, color = id)) +
@@ -169,6 +173,8 @@ qq <- query_cooccurrences |>
 ungroup() |>
 group_by(text, author_id) |>
 count(sort = TRUE) 
+
+qq |> ungroup() |> count(n)
 
 ggplot(qq, aes(x = n)) +
 geom_bar(fill = "lightslateblue") +
